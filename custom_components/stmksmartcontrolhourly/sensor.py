@@ -280,7 +280,7 @@ class AwattarSensor(CoordinatorEntity, SensorEntity):
         for dat in data["data"]:
             converted_timestamp = datetime.fromtimestamp(dat["start_timestamp"] / 1000)
             converted_endtimestamp = datetime.fromtimestamp(dat["end_timestamp"] / 1000)
-            converted_price = round(dat["marketprice"] / 10, 3) * 1.2 + 1.44
+            converted_price = round((dat["marketprice"] / 10) * 1.2 + 1.44, 3)
             currentKey = currentKeyPrefix + converted_timestamp.strftime("%H") + "h"
             _PRICE_SENSOR_ATTRIBUTES_MAP[currentKey] = converted_price
 
