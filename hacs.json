@@ -1,6 +1,6 @@
 {
-    "name": "Awattar",
+    "name": "Energie Steiermark SmartControl Hourly Tariff",
     "content_in_root": false,
-    "domains": ["awattar", "sensor"],
+    "domains": ["stmksmartcontrolhourly", "sensor"],
     "render_readme": true
 }

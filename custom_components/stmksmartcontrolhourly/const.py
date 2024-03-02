@@ -2,7 +2,7 @@
 from aiopvpc.const import TARIFFS
 import voluptuous as vol
 
-DOMAIN = "awattar"
+DOMAIN = "stmksmartcontrolhourly"
 
 ATTR_POWER = "power"
 ATTR_POWER_P3 = "power_p3"

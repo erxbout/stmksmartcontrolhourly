@@ -59,8 +59,8 @@ PARALLEL_UPDATES = 1
 
 apiEndpoint = "https://api.awattar.at/v1/marketdata"
 _PRICE_SENSOR_ATTRIBUTES_MAP = {
-    "data_id": "1002",
-    "name": "Awattar",
+    "data_id": "1003",
+    "name": "stmksmartcontrolhourly",
     "tariff": "hourly",
     "period": "period",
     "available_power": "available_power",
@@ -252,7 +252,7 @@ class AwattarSensor(CoordinatorEntity, SensorEntity):
     def __init__(self, coordinator):
         """Pass coordinator to CoordinatorEntity."""
         super().__init__(coordinator, context="awattar")
-        self._name = "Awattar"
+        self._name = "stmksmartcontrolhourly"
         self._state = 0
 
     @callback
@@ -280,7 +280,7 @@ class AwattarSensor(CoordinatorEntity, SensorEntity):
         for dat in data["data"]:
             converted_timestamp = datetime.fromtimestamp(dat["start_timestamp"] / 1000)
             converted_endtimestamp = datetime.fromtimestamp(dat["end_timestamp"] / 1000)
-            converted_price = round(dat["marketprice"] / 10, 3)
+            converted_price = round(dat["marketprice"] / 10, 3) * 1.2 + 1.44
             currentKey = currentKeyPrefix + converted_timestamp.strftime("%H") + "h"
             _PRICE_SENSOR_ATTRIBUTES_MAP[currentKey] = converted_price
 

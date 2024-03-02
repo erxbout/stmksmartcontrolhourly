@@ -1,9 +1,9 @@
 {
-  "domain": "awattar",
-  "name": "Awattar Spain electricity hourly pricing",
+  "domain": "stmksmartcontrolhourly",
+  "name": "Energie Steiermark SmartControl Hourly Tariff",
   "codeowners": ["@erxbout"],
   "config_flow": true,
-  "documentation": "https://www.home-assistant.io/integrations/awattar",
+  "documentation": "https://github.com/erxbout/stmksmartcontrolhourly",
   "iot_class": "cloud_polling",
   "loggers": ["aiopvpc"],
   "quality_scale": "platinum",
