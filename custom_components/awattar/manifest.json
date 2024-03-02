@@ -1,0 +1,12 @@
+{
+  "domain": "awattar",
+  "name": "Awattar Spain electricity hourly pricing",
+  "codeowners": ["@erxbout"],
+  "config_flow": true,
+  "documentation": "https://www.home-assistant.io/integrations/awattar",
+  "iot_class": "cloud_polling",
+  "loggers": ["aiopvpc"],
+  "quality_scale": "platinum",
+  "requirements": ["aiopvpc==4.2.2"],
+  "version": "0.0.0"
+}

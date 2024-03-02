@@ -1,0 +1,6 @@
+{
+    "name": "Awattar",
+    "content_in_root": false,
+    "domains": ["awattar", "sensor"],
+    "render_readme": true
+}
