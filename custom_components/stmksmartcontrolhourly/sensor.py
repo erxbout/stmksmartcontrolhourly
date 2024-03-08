@@ -280,7 +280,7 @@ class AwattarSensor(CoordinatorEntity, SensorEntity):
         for dat in data["data"]:
             converted_timestamp = datetime.fromtimestamp(dat["start_timestamp"] / 1000)
             converted_endtimestamp = datetime.fromtimestamp(dat["end_timestamp"] / 1000)
-            converted_price = round((dat["marketprice"] / 10) * 1.2 + 1.44, 3)
+            converted_price = round(dat["marketprice"] / 10, 3) * 1.2 + 1.44
             currentKey = currentKeyPrefix + converted_timestamp.strftime("%H") + "h"
             _PRICE_SENSOR_ATTRIBUTES_MAP[currentKey] = converted_price
 
@@ -299,9 +299,6 @@ class AwattarSensor(CoordinatorEntity, SensorEntity):
             if currentKey == endKeyTomorrow:
                 break
 
-        print("Updated price data to")
-        print(_PRICE_SENSOR_ATTRIBUTES_MAP)
-
         self.async_write_ha_state()
 
     @property
@@ -317,7 +314,17 @@ class AwattarSensor(CoordinatorEntity, SensorEntity):
     @property
     def extra_state_attributes(self):
         """Return the name of the sensor."""
-        return _PRICE_SENSOR_ATTRIBUTES_MAP
+        result = _PRICE_SENSOR_ATTRIBUTES_MAP.copy()
+
+        if result["price_next_day_00h"] == "price_next_day_00h":
+            currentKeyPrefix = "price_next_day_"
+            currentKey = "price_next_day_00h"
+
+            for i in range(24):
+                currentKey = currentKeyPrefix + f"{i:02}" + "h"
+                result.pop(currentKey)
+
+        return result
 
     @property
     def native_unit_of_measurement(self):
