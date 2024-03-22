@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "PollingInterval": "Polling interval in Minuten",
+          "Formula": "Formel zur Berechnung des Strompreises",
+          "SourceCountries": "Land für Datenquelle (API von awattar)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "asdf",
+      "invalid_auth": "asdf",
+      "unknown": "asdf"
+    },
+    "abort": {
+      "already_configured": "asdf"
+    }
+  }
+}

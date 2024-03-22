@@ -1,6 +1,8 @@
+import ast
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 import logging
+import operator
 
 import async_timeout
 import requests
@@ -17,6 +19,42 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .const import DOMAIN
+
+_operations = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.Pow: operator.pow,
+}
+
+
+def _safe_eval(node, variables, functions):
+    if isinstance(node, ast.Num):
+        return node.n
+    elif isinstance(node, ast.Name):
+        return variables[node.id]  # KeyError -> Unsafe variable
+    elif isinstance(node, ast.BinOp):
+        op = _operations[node.op.__class__]  # KeyError -> Unsafe operation
+        left = _safe_eval(node.left, variables, functions)
+        right = _safe_eval(node.right, variables, functions)
+        if isinstance(node.op, ast.Pow):
+            assert right < 100
+        return op(left, right)
+    elif isinstance(node, ast.Call):
+        assert not node.keywords
+        assert isinstance(node.func, ast.Name), "Unsafe function derivation"
+        func = functions[node.func.id]  # KeyError -> Unsafe function
+        args = [_safe_eval(arg, variables, functions) for arg in node.args]
+        return func(*args)
+
+    assert False, "Unsafe operation"
+
+
+def safe_eval(expr, variables={}, functions={}):
+    node = ast.parse(expr, "<string>", "eval").body
+    return _safe_eval(node, variables, functions)
+
 
 _LOGGER = logging.getLogger(__name__)
 PARALLEL_UPDATES = 1
@@ -57,7 +95,7 @@ PARALLEL_UPDATES = 1
 #     ),
 # )
 
-apiEndpoint = "https://api.awattar.at/v1/marketdata"
+defaultApiEndpoint = "https://api.awattar.at/v1/marketdata"
 _PRICE_SENSOR_ATTRIBUTES_MAP = {
     "data_id": "1003",
     "name": "stmksmartcontrolhourly",
@@ -149,7 +187,22 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    coordinator = MyCoordinator(hass, apiEndpoint, config_entry.data["PollingInterval"])
+    apiEndpointDE = defaultApiEndpoint.replace(".at", ".de")
+
+    if config_entry.data["SourceCountries"] == "DE":
+        coordinator = MyCoordinator(
+            hass,
+            apiEndpointDE,
+            config_entry.data["PollingInterval"],
+            config_entry.data["Formula"],
+        )
+    else:
+        coordinator = MyCoordinator(
+            hass,
+            defaultApiEndpoint,
+            config_entry.data["PollingInterval"],
+            config_entry.data["Formula"],
+        )
 
     await coordinator.async_config_entry_first_refresh()
 
@@ -162,7 +215,7 @@ async def async_setup_entry(
 class MyCoordinator(DataUpdateCoordinator):
     """My custom coordinator."""
 
-    def __init__(self, hass, apiEndpoint, pollingInterval):
+    def __init__(self, hass, apiEndpoint, pollingInterval, formula):
         """Initialize my coordinator."""
         super().__init__(
             hass,
@@ -173,6 +226,7 @@ class MyCoordinator(DataUpdateCoordinator):
             update_interval=timedelta(minutes=pollingInterval),
         )
         self.apiEndpoint = apiEndpoint
+        self.formula = formula
         self.hass = hass
 
     async def _async_update_data(self):
@@ -228,7 +282,7 @@ class MyCoordinator(DataUpdateCoordinator):
                 return None
 
         data = fetch_data(
-            apiEndpoint,
+            self.apiEndpoint,
             startOfToday.timestamp() * 1000,
             endOfTomorrow.timestamp() * 1000,
         )
@@ -254,6 +308,7 @@ class AwattarSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator, context="awattar")
         self._name = "stmksmartcontrolhourly"
         self._state = 0
+        self.formula = coordinator.formula
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -267,7 +322,6 @@ class AwattarSensor(CoordinatorEntity, SensorEntity):
 
         for i in range(24):
             currentKey = currentKeyPrefix + f"{i:02}" + "h"
-            print(currentKey)
             # reset tomorrow data because if its filled from yesterday it does not get filled with new data (or in other words stays filled with same data)
             _PRICE_SENSOR_ATTRIBUTES_MAP[currentKey] = currentKey
 
@@ -280,7 +334,17 @@ class AwattarSensor(CoordinatorEntity, SensorEntity):
         for dat in data["data"]:
             converted_timestamp = datetime.fromtimestamp(dat["start_timestamp"] / 1000)
             converted_endtimestamp = datetime.fromtimestamp(dat["end_timestamp"] / 1000)
-            converted_price = round(dat["marketprice"] / 10, 3) * 1.2 + 1.44
+            # converted_price = round(dat["marketprice"] / 10, 3) * 1.2 + 1.44
+            inputVariables = {
+                "marketprice_ct_per_kWh": dat["marketprice"] / 10,
+                "marketprice_eur_per_kWh": dat["marketprice"] / 1000,
+                "marketprice_eur_per_MWh": dat["marketprice"],
+            }
+            converted_price = safe_eval(
+                self.formula,
+                inputVariables,
+                {"round": round},
+            )
             currentKey = currentKeyPrefix + converted_timestamp.strftime("%H") + "h"
             _PRICE_SENSOR_ATTRIBUTES_MAP[currentKey] = converted_price
 

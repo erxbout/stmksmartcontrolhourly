@@ -14,6 +14,7 @@ from homeassistant.exceptions import HomeAssistantError
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
+_sourceCountries = {"AT", "DE"}
 
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
@@ -51,7 +52,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         data_schema = vol.Schema(
             {
-                vol.Required("PollingInterval"): int,
+                vol.Required("PollingInterval", default=30): int,
+                vol.Required(
+                    "Formula", default="round(marketprice_ct_per_kWh, 2)"
+                ): str,
+                vol.Required("SourceCountries", default="AT"): vol.In(_sourceCountries),
             }
         )
 

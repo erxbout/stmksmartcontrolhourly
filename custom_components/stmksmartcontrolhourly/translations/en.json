@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "PollingInterval": "Polling interval in minutes",
+          "Formula": "Formula to calculate actual price",
+          "SourceCountries": "Country to pull data for (API from awattar)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "asdf",
+      "invalid_auth": "asdf",
+      "unknown": "asdf"
+    },
+    "abort": {
+      "already_configured": "asdf"
+    }
+  }
+}

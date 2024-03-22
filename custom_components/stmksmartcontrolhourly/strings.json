@@ -3,7 +3,9 @@
     "step": {
       "user": {
         "data": {
-          "PollingInterval": "PollingInterval"
+          "PollingInterval": "[%key:common::config_flow::data::PollingInterval%]",
+          "Formula": "[%key:common::config_flow::data::Formula%]",
+          "SourceCountries": "[%key:common::config_flow::data::SourceCountries%]"
         }
       }
     },
