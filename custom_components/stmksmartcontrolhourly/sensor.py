@@ -331,6 +331,7 @@ class AwattarSensor(CoordinatorEntity, SensorEntity):
         endKeyToday = "price_23h"
         endKeyTomorrow = "price_next_day_23h"
         tomorrowKeyPrefix = "price_next_day_"
+        lastHour = 0
         for dat in data["data"]:
             converted_timestamp = datetime.fromtimestamp(dat["start_timestamp"] / 1000)
             converted_endtimestamp = datetime.fromtimestamp(dat["end_timestamp"] / 1000)
@@ -356,6 +357,20 @@ class AwattarSensor(CoordinatorEntity, SensorEntity):
                     + (converted_timestamp + timedelta(hours=1)).strftime("%H")
                     + "h"
                 )
+
+            # if missing data for an hour its a timeshift!
+            if (
+                lastHour > 0
+                and lastHour != 23
+                and lastHour != converted_timestamp.hour - 1
+            ):
+                _PRICE_SENSOR_ATTRIBUTES_MAP[
+                    currentKeyPrefix
+                    + (converted_timestamp - timedelta(hours=1)).strftime("%H")
+                    + "h"
+                ] = converted_price
+
+            lastHour = converted_timestamp.hour
 
             if currentKey == endKeyToday:
                 currentKeyPrefix = tomorrowKeyPrefix
